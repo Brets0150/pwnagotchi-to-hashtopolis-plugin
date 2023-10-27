@@ -8,6 +8,7 @@ main.plugins.pwn2crack.enabled = true
 main.plugins.pwn2crack.htserver = "http://10.100.200.250"
 
 # Required: The API key you get from the Hashtopolis server
+# To get a Hashtopolis API key, log into your Hashtopolis server and go to "Users" --> "API Management" --> "Create New API Key".
 main.plugins.pwn2crack.accesskey = "MyKey"
 
 # Optional: Is the Hash secret? If not set Pwn2Crack defaults to "true"

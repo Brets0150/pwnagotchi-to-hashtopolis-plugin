@@ -76,7 +76,7 @@ def upload_hash_to_hashtopolis(hashfile, htserver, accesskey, hashisSecret, useB
     except requests.exceptions.ConnectionError as error_code:
         # If the request fails, send the returned error message to the log.
         logging.error('[Pwn2Crack] The request to Hashtopolis failed. Check the Hashtopolis server URL and API key.')
-        print(error_code)
+        logging.debug(error_code)
         return
     # Check if the request was successful and the hashlist ID was returned.
     if request.status_code == 200 and 'hashlistId' in request.text:
@@ -137,7 +137,8 @@ def upload_wordlist_to_hashtopolis(wordlistfile, htserver, accesskey):
     except requests.exceptions.ConnectionError as error_code:
         # If the request fails, send the returned error message to the log.
         logging.error('[Pwn2Crack] The request to Hashtopolis failed. Check the Hashtopolis server URL and API key.')
-        print(error_code)
+        logging.debug(error_code)
+        return
     # Check if the responce was successful and the and the response was 'OK'.
     if request.status_code == 200 and 'OK' in request.text:
         logging.debug('[Pwn2Crack] The wordlist was uploaded to Hashtopolis.')

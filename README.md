@@ -39,9 +39,11 @@ Since the release of the Pwnagotchi, there have been updates to the WiFi hash cr
 You will need to download and compile ZerBea's version of hcxtools-v6.2.7. The **old hcxtool**, like the one Hashie uses,  will not work.
 
 GitHub Repo: https://github.com/ZerBea/hcxtools
+
 Required Version Release: https://github.com/ZerBea/hcxtools/releases/tag/6.2.7
 
 **Q:** Why is Pwn2Crack not using the latest version of ZerBea's hcxtools???
+
 **A:** In short, hcxtools version 6.2.8 and up require OpenSSL 3.0 EVP API. Most of the community is still using EvilSocket's Pwnagothchi v1.5.5, built on a now outdated OS. The Pwnagothchi v1.5.5 OS(Kali for Pi0) cannot support OpenSSL 3.0. However, for those who have managed to get a new OS working on a Pi02, the latest versions of hcxtools should work with this plugin(maybe? have not tested).
 
 ### Prerequisite

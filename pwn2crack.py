@@ -10,152 +10,10 @@ from pwnagotchi.ui.components import LabeledValue
 from pwnagotchi.ui.view import BLACK
 import pwnagotchi.ui.fonts as fonts
 
-# Upload the hash to Hashtopolis using the API function.
-def upload_hash_to_hashtopolis(hashfile, htserver, accesskey, hashisSecret, useBrain, brainFeatures, numhashtoupload):
-    # Set the hashlist name to hashfile but remove leading path and trailing .22000 extension.
-    hashlist_name = str(hashfile.split('/')[-1].split('.')[0])
-
-    # Set Hashtopolis APIv1 URL.
-    ht_api_url = htserver + '/api/user.php'
-
-    # Read every line in the file, and remove any duplicate lines. Then put the lines back into a string variable.
-    with open(hashfile, 'r') as file:
-        hashlist = file.readlines()
-        # if numhashtoupload is greater than 0, then only read the first numhashtoupload lines of the sorted unique list.
-        if numhashtoupload > 0:
-            hashlist = sorted(set(hashlist))[:numhashtoupload]
-        else:
-            hashlist = sorted(set(hashlist))
-        # Take the hashlist variable, and put it back into a one string variable.
-        hash = ''.join(hashlist)
-    # Encode the hash variable to base64.
-    hash = base64.b64encode(hash.encode()).decode()
-
-    # Create a JSON object with all the required information.
-    # Example submit new Hashlist JSON.
-    # {
-    # "section": "hashlist",
-    # "request": "createHashlist",
-    # "name": "API Hashlist",
-    # "isSalted": false,
-    # "isSecret": true,
-    # "isHexSalt": false,
-    # "separator": ":",
-    # "format": 0,
-    # "hashtypeId": 22000,
-    # "accessGroupId": 1,
-    # "data": "$(base64 -w 0 hash.hc22000)",
-    # "useBrain": false,
-    # "brainFeatures": 0,
-    # "accessKey": "mykey"
-    # }
-    request_json_data = {
-    "section": "hashlist",
-    "request": "createHashlist",
-    "name": "%s" % hashlist_name,
-    "isSalted": False,
-    "isSecret": hashisSecret,
-    "isHexSalt": False,
-    "separator": ":",
-    "format": 0,
-    "hashtypeId": 22000,
-    "accessGroupId": 1,
-    "data": "%s" % hash,
-    "useBrain": useBrain,
-    "brainFeatures":  brainFeatures,
-    'accessKey': "%s" % accesskey
-    }
-    request_json_data = json.dumps(request_json_data)
-    # Make a POST web request to Hashtopolis using APIv1 to submit the new hashlist wih 'Content-Type: application/json' header.
-    # If the request is successful, then Hashtopolis will return a JSON object with the new hashlist ID.
-    # Example: {"section":"hashlist","request":"createHashlist","response":"OK","hashlistId":198}
-    # If the request is not successful, then Hashtopolis will return a JSON object with an error message.
-    # Example: {"section":"hashlist","request":"createHashlist","response":"ERROR","message":"Invalid hashlist format!"}
-    try:
-        request = requests.post(ht_api_url, data=request_json_data, headers={'Content-Type': 'application/json'})
-    except requests.exceptions.ConnectionError as error_code:
-        # If the request fails, send the returned error message to the log.
-        logging.error('[Pwn2Crack] The request to Hashtopolis failed. Check the Hashtopolis server URL and API key.')
-        logging.debug(error_code)
-        return
-    # Check if the request was successful and the hashlist ID was returned.
-    if request.status_code == 200 and 'hashlistId' in request.text:
-        logging.debug('[Pwn2Crack] The hashlist was uploaded to Hashtopolis.')
-        # Rename the file to filename + '.uploaded' to indicate the file has been uploaded to Hashtopolis.
-        os.rename(hashfile, hashfile + '.uploaded')
-    # If the request fails, send the returned error message to the log.
-    if request.status_code != 200 or 'hashlistId' not in request.text:
-        logging.error('[Pwn2Crack] The hashlist was not uploaded to Hashtopolis.')
-        logging.error('[Pwn2Crack] Status Code: ' + str(request.status_code))
-        logging.error('[Pwn2Crack] Request Data: ' + str(request.text) + ' -- ' + str(hashfile))
-        logging.error('[Pwn2Crack] Request Json Data: ' + str(request_json_data))
-
-def upload_wordlist_to_hashtopolis(wordlistfile, htserver, accesskey):
-    # Set Hashtopolis APIv1 URL.
-    ht_api_url = htserver + '/api/user.php'
-    # Set the wordlist name to wordlistfile but remove leading path and trailing .wordlist extension.
-    wordlist_name = wordlistfile.split('/')[-1].split('.')[0]
-    # Read every line in the file, and remove any duplicate lines. Then put the lines back into one string variable, then base64 encode it.
-    with open(wordlistfile, 'r') as file:
-        wordlist = file.readlines()
-        wordlist = sorted(set(wordlist))
-        # Take the wordlist variable, and put it back into a one string variable.
-        wordlist = ''.join(wordlist)
-    # Encode the wordlist variable to base64.
-    wordlist = base64.b64encode(wordlist.encode()).decode()
-
-    # Create a JSON object with all the required information.
-    # Example submit new Hashlist JSON.
-    # {
-    # "section": "file",
-    # "request": "addFile",
-    # "filename": "api_test_inline.txt",
-    # "fileType": 0,
-    # "source": "inline",
-    # "accessGroupId": 1,
-    # "data": "MTIzNA0KNTY3OA0KcGFzc3dvcmQNCmFiYw==",
-    # "accessKey": "mykey"
-    # }
-    request_json_data = {
-    "section": "file",
-    "request": "addFile",
-    "filename": "%s" % wordlist_name,
-    "fileType": 0,
-    "source": "inline",
-    "accessGroupId": 1,
-    "data": "%s" % wordlist,
-    'accessKey': "%s" % accesskey
-    }
-    request_json_data = json.dumps(request_json_data)
-    # Make a POST web request to Hashtopolis using APIv1 to submit the new wordlist file wih 'Content-Type: application/json' header.
-    # If the request is successful, then Hashtopolis will return a JSON object with the new wordlist ID.
-    # Example: { "section": "file", "request": "addFile", "response": "OK" }
-    # If the request is not successful, then Hashtopolis will return a JSON object with an error message.
-    # Example: {"section":"file","request":"addFile","response":"ERROR","message":"Invalid file format!"}
-    try:
-        request = requests.post(ht_api_url, data=request_json_data, headers={'Content-Type': 'application/json'})
-    except requests.exceptions.ConnectionError as error_code:
-        # If the request fails, send the returned error message to the log.
-        logging.error('[Pwn2Crack] The request to Hashtopolis failed. Check the Hashtopolis server URL and API key.')
-        logging.debug(error_code)
-        return
-    # Check if the responce was successful and the and the response was 'OK'.
-    if request.status_code == 200 and 'OK' in request.text:
-        logging.debug('[Pwn2Crack] The wordlist was uploaded to Hashtopolis.')
-        # Rename the file to filename + '.uploaded' to indicate the file has been uploaded to Hashtopolis.
-        os.rename(wordlistfile, wordlistfile + '.uploaded')
-    # If the request fails, send the returned error message to the log.
-    if request.status_code != 200 or 'OK' not in request.text:
-        logging.error('[Pwn2Crack] The wordlist was not uploaded to Hashtopolis.')
-        logging.error('[Pwn2Crack] Status Code: ' + str(request.status_code))
-        logging.error('[Pwn2Crack] Request Data: ' + str(request.text) + ' -- ' + str(wordlistfile))
-        logging.error('[Pwn2Crack] Request Json Data: ' + str(request_json_data))
-
-
 # This is the main plugin class.
 class Pwn2Crack(plugins.Plugin):
     __author__ = 'me@CyberGladius.com'
-    __version__ = '0.0.9'
+    __version__ = '1.0.1'
     __license__ = 'GPL3'
     __description__ = 'This Pwnagotchi plugin will evaluate captured handshakes from pcap files, clean and convert complete handshakes to Hashcat-compatible 22000 hashes, and then create a new hashlist within Hashtopolis.'
     hcxtools_version_supported = '6.2.7' # Working as 11/2023, later version will not work on Pwnagotchi 1.5.5 because the OS is too old to support OpenSSL 3.0 EVP API.
@@ -313,7 +171,7 @@ class Pwn2Crack(plugins.Plugin):
         # For each file in the list, upload it to Hashtopolis using the API.
         for filename in hashlist_to_upload:
             logging.debug('[Pwn2Crack] Uploading ' + filename + ' to Hashtopolis.')
-            upload_hash_to_hashtopolis(self.config['bettercap']['handshakes'] + '/' + filename, self.options['htserver'], self.options['accesskey'], self.options['hashisSecret'], self.options['useBrain'], self.options['brainFeatures'], self.options['numhashtoupload'])
+            HTAccess.upload_hash_to_hashtopolis(self.config['bettercap']['handshakes'] + '/' + filename, self.options['htserver'], self.options['accesskey'], self.options['hashisSecret'], self.options['useBrain'], self.options['brainFeatures'], self.options['numhashtoupload'])
         # If self.options['uploadwordlist'] is set to true, then upload the wordlist to Hashtopolis.
         if self.options['uploadwordlist']:
             # Create a list of all files ending in .wordlist in the pwnagotchi handshakes directory.
@@ -324,4 +182,149 @@ class Pwn2Crack(plugins.Plugin):
                     # Upload the wordlist to Hashtopolis using the API.
             for filename in wordlist_to_upload:
                 logging.debug('[Pwn2Crack] Uploading ' + filename + ' to Hashtopolis.')
-                upload_wordlist_to_hashtopolis(self.config['bettercap']['handshakes'] + '/' + filename, self.options['htserver'], self.options['accesskey'])
+                HTAccess.upload_wordlist_to_hashtopolis(self.config['bettercap']['handshakes'] + '/' + filename, self.options['htserver'], self.options['accesskey'])
+
+class HTAccess:
+    __description__ = 'This class contains functions to access Hashtopolis using the APIv1.'
+
+    # Upload the hash to Hashtopolis using the API function.
+    def upload_hash_to_hashtopolis(hashfile, htserver, accesskey, hashisSecret, useBrain, brainFeatures, numhashtoupload):
+        # Set the hashlist name to hashfile but remove leading path and trailing .22000 extension.
+        hashlist_name = str(hashfile.split('/')[-1].split('.')[0])
+
+        # Set Hashtopolis APIv1 URL.
+        ht_api_url = htserver + '/api/user.php'
+
+        # Read every line in the file, and remove any duplicate lines. Then put the lines back into a string variable.
+        with open(hashfile, 'r') as file:
+            hashlist = file.readlines()
+            # if numhashtoupload is greater than 0, then only read the first numhashtoupload lines of the sorted unique list.
+            if numhashtoupload > 0:
+                hashlist = sorted(set(hashlist))[:numhashtoupload]
+            else:
+                hashlist = sorted(set(hashlist))
+            # Take the hashlist variable, and put it back into a one string variable.
+            hash = ''.join(hashlist)
+        # Encode the hash variable to base64.
+        hash = base64.b64encode(hash.encode()).decode()
+
+        # Create a JSON object with all the required information.
+        # Example submit new Hashlist JSON.
+        # {
+        # "section": "hashlist",
+        # "request": "createHashlist",
+        # "name": "API Hashlist",
+        # "isSalted": false,
+        # "isSecret": true,
+        # "isHexSalt": false,
+        # "separator": ":",
+        # "format": 0,
+        # "hashtypeId": 22000,
+        # "accessGroupId": 1,
+        # "data": "$(base64 -w 0 hash.hc22000)",
+        # "useBrain": false,
+        # "brainFeatures": 0,
+        # "accessKey": "mykey"
+        # }
+        request_json_data = {
+        "section": "hashlist",
+        "request": "createHashlist",
+        "name": "%s" % hashlist_name,
+        "isSalted": False,
+        "isSecret": hashisSecret,
+        "isHexSalt": False,
+        "separator": ":",
+        "format": 0,
+        "hashtypeId": 22000,
+        "accessGroupId": 1,
+        "data": "%s" % hash,
+        "useBrain": useBrain,
+        "brainFeatures":  brainFeatures,
+        'accessKey': "%s" % accesskey
+        }
+        request_json_data = json.dumps(request_json_data)
+        # Make a POST web request to Hashtopolis using APIv1 to submit the new hashlist wih 'Content-Type: application/json' header.
+        # If the request is successful, then Hashtopolis will return a JSON object with the new hashlist ID.
+        # Example: {"section":"hashlist","request":"createHashlist","response":"OK","hashlistId":198}
+        # If the request is not successful, then Hashtopolis will return a JSON object with an error message.
+        # Example: {"section":"hashlist","request":"createHashlist","response":"ERROR","message":"Invalid hashlist format!"}
+        try:
+            request = requests.post(ht_api_url, data=request_json_data, headers={'Content-Type': 'application/json'})
+        except requests.exceptions.ConnectionError as error_code:
+            # If the request fails, send the returned error message to the log.
+            logging.error('[Pwn2Crack] The request to Hashtopolis failed. Check the Hashtopolis server URL and API key.')
+            logging.debug(error_code)
+            return
+        # Check if the request was successful and the hashlist ID was returned.
+        if request.status_code == 200 and 'hashlistId' in request.text:
+            logging.debug('[Pwn2Crack] The hashlist was uploaded to Hashtopolis.')
+            # Rename the file to filename + '.uploaded' to indicate the file has been uploaded to Hashtopolis.
+            os.rename(hashfile, hashfile + '.uploaded')
+        # If the request fails, send the returned error message to the log.
+        if request.status_code != 200 or 'hashlistId' not in request.text:
+            logging.error('[Pwn2Crack] The hashlist was not uploaded to Hashtopolis.')
+            logging.error('[Pwn2Crack] Status Code: ' + str(request.status_code))
+            logging.error('[Pwn2Crack] Request Data: ' + str(request.text) + ' -- ' + str(hashfile))
+            logging.error('[Pwn2Crack] Request Json Data: ' + str(request_json_data))
+
+    def upload_wordlist_to_hashtopolis(wordlistfile, htserver, accesskey):
+        # Set Hashtopolis APIv1 URL.
+        ht_api_url = htserver + '/api/user.php'
+        # Set the wordlist name to wordlistfile but remove leading path and trailing .wordlist extension.
+        wordlist_name = wordlistfile.split('/')[-1].split('.')[0]
+        # Read every line in the file, and remove any duplicate lines. Then put the lines back into one string variable, then base64 encode it.
+        with open(wordlistfile, 'r') as file:
+            wordlist = file.readlines()
+            wordlist = sorted(set(wordlist))
+            # Take the wordlist variable, and put it back into a one string variable.
+            wordlist = ''.join(wordlist)
+        # Encode the wordlist variable to base64.
+        wordlist = base64.b64encode(wordlist.encode()).decode()
+
+        # Create a JSON object with all the required information.
+        # Example submit new Hashlist JSON.
+        # {
+        # "section": "file",
+        # "request": "addFile",
+        # "filename": "api_test_inline.txt",
+        # "fileType": 0,
+        # "source": "inline",
+        # "accessGroupId": 1,
+        # "data": "MTIzNA0KNTY3OA0KcGFzc3dvcmQNCmFiYw==",
+        # "accessKey": "mykey"
+        # }
+        request_json_data = {
+        "section": "file",
+        "request": "addFile",
+        "filename": "%s" % wordlist_name,
+        "fileType": 0,
+        "source": "inline",
+        "accessGroupId": 1,
+        "data": "%s" % wordlist,
+        'accessKey': "%s" % accesskey
+        }
+        request_json_data = json.dumps(request_json_data)
+        # Make a POST web request to Hashtopolis using APIv1 to submit the new wordlist file wih 'Content-Type: application/json' header.
+        # If the request is successful, then Hashtopolis will return a JSON object with the new wordlist ID.
+        # Example: { "section": "file", "request": "addFile", "response": "OK" }
+        # If the request is not successful, then Hashtopolis will return a JSON object with an error message.
+        # Example: {"section":"file","request":"addFile","response":"ERROR","message":"Invalid file format!"}
+        try:
+            request = requests.post(ht_api_url, data=request_json_data, headers={'Content-Type': 'application/json'})
+        except requests.exceptions.ConnectionError as error_code:
+            # If the request fails, send the returned error message to the log.
+            logging.error('[Pwn2Crack] The request to Hashtopolis failed. Check the Hashtopolis server URL and API key.')
+            logging.debug(error_code)
+            return
+        # Check if the responce was successful and the and the response was 'OK'.
+        if request.status_code == 200 and 'OK' in request.text:
+            logging.debug('[Pwn2Crack] The wordlist was uploaded to Hashtopolis.')
+            # Rename the file to filename + '.uploaded' to indicate the file has been uploaded to Hashtopolis.
+            os.rename(wordlistfile, wordlistfile + '.uploaded')
+        # If the request fails, send the returned error message to the log.
+        if request.status_code != 200 or 'OK' not in request.text:
+            logging.error('[Pwn2Crack] The wordlist was not uploaded to Hashtopolis.')
+            logging.error('[Pwn2Crack] Status Code: ' + str(request.status_code))
+            logging.error('[Pwn2Crack] Request Data: ' + str(request.text) + ' -- ' + str(wordlistfile))
+            logging.error('[Pwn2Crack] Request Json Data: ' + str(request_json_data))
+

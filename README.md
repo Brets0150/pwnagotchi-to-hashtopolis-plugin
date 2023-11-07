@@ -17,6 +17,8 @@ Pwn2Crack is a Pwnagotchi plugin that processes captured handshakes (PCAP files)
 ## Overview
 Pwn2Crack aims to streamline a Red Teamer or PenTester process from capturing the WiFi hash to cracking passwords. When the Pwnagotchi captures a handshake, Pwn2Crack will test the PCAP file for a complete and usable WiFi hash. If the PCAP file is found to be **unusable, it will be deleted**. If the PCAP file is good, a file(```<ESSID>_<First6ofAPBSSID>.22000```) with the hashes will be created. Optionally, a wordlist(```<ESSID>_<First6ofAPBSSID>.wordlist```) file will be created. Whenever the Pwnagotchi gets a connection to the internet, triggered by the "on_internet_available()" function, it will connect to your Hashtopolis server and upload the hash file and wordlist files.
 
+![Handshakes uploaded to Hashtopolis](ht_handshake_uploads.png)
+
 ### "on_internet_available()" function
 The Pwnagotchi's plugin API has the "on_internet_available()" function. This is triggered when the system can open a connection to "pwnagotchi.ai:443". So, the "on_internet_available()" will only trigger if you have a fully working DNS and Internet connection.
 
@@ -66,3 +68,37 @@ After installing the hcxtools package, adding Pwn2Crack is simple. Copy the "pwn
 
 **! Happy Hunting !**
 
+# Data Flow Chat
+
+```mermaid
+graph TD;
+A[Initialize Pwn2Crack] -->|Initialize variables| B[Check if hcxtools is available];
+B -->|No| E[Disable plugin];
+B -->|Yes| C[Check hcxtools version];
+C -->|Compatible| D[Enable plugin];
+C -->|Not compatible| E[Disable plugin];
+D -->|On handshake capture| F[Check if plugin is running];
+E --> V[Log error];
+F -->|No| X[End];
+F -->|Yes| G[Set hash output filename];
+G -->|Check if hashes are uploaded,exists ESSID_First6ofAPBSSID.22000.uploaded| H[If uploaded, skip];
+G -->|If not uploaded| I[Confirm pcap is valid handshake];
+I -->|No| K[Delete pcap file];
+I -->|Yes| J[Convert pcap to hashcat 22000 hash];
+J -->|Check if hash file is created| L[If created, continue];
+J -->|If not created| K[Delete pcap file];
+L -->|Generate wordlist| M[If enabled, generate wordlist];
+L -->|Skip wordlist generation| N[End];
+M -->|Check if wordlist file is created| O[If created, continue];
+M -->|If not created| N[End];
+O -->|Upload hashes to Hashtopolis| P[Upload hashes];
+P -->|Failure| R[Log error];
+P -->|Success| Q[Rename file to indicate upload];
+Q -->|Skip wordlist upload| T[End];
+Q -->|Upload wordlist| S[If enabled, upload wordlist];
+S -->|Failure| V[Log error];
+S -->|Success| U[Rename file to indicate upload];
+T --> V[Log error];
+X --> V[Log error];
+```
+#

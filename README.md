@@ -49,7 +49,8 @@ Required Version Release: https://github.com/ZerBea/hcxtools/releases/tag/6.2.7
 **A:** In short, hcxtools version 6.2.8 and up require OpenSSL 3.0 EVP API. Most of the community is still using EvilSocket's Pwnagothchi v1.5.5, built on a now outdated OS. The Pwnagothchi v1.5.5 OS(Kali for Pi0) cannot support OpenSSL 3.0. However, for those who have managed to get a new OS working on a Pi02, the latest versions of hcxtools should work with this plugin(maybe? have not tested).
 
 ### Prerequisite
-    # If you are on a totally fresh install of Pwnagotchi v1.5.5, you will need to run apt update multiple times while accepting all changes to updating the repository list.
+If you are on a totally fresh install of Pwnagotchi v1.5.5, you will need to run "apt update" multiple(3-4) times while accepting all changes to updating the repository list.
+
     apt update
     apt install -y python3-requests build-essential pkg-config libcurl4-openssl-dev libssl-dev zlib1g-dev make gcc
 

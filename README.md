@@ -49,19 +49,23 @@ Required Version Release: https://github.com/ZerBea/hcxtools/releases/tag/6.2.7
 **A:** In short, hcxtools version 6.2.8 and up require OpenSSL 3.0 EVP API. Most of the community is still using EvilSocket's Pwnagothchi v1.5.5, built on a now outdated OS. The Pwnagothchi v1.5.5 OS(Kali for Pi0) cannot support OpenSSL 3.0. However, for those who have managed to get a new OS working on a Pi02, the latest versions of hcxtools should work with this plugin(maybe? have not tested).
 
 ### Prerequisite
-
-    apt update && apt install -y python3-requests build-essential
+    # If you are on a totally fresh install of Pwnagotchi v1.5.5, you will need to run apt update multiple times while accepting all changes to updating the repository list.
+    apt update
+    apt install -y python3-requests build-essential pkg-config libcurl4-openssl-dev libssl-dev zlib1g-dev make gcc
 
 ### HcxTools Install
 
     wget https://github.com/ZerBea/hcxtools/archive/refs/tags/6.2.7.tar.gz
     tar xzvf 6.2.7.tar.gz
-    cd ./6.2.7
+    cd ./hcxtools-6.2.7
 
     # Build the source code.
     make
     # Install the executables to `/usr/bin`
     make install
+
+    # Confirm the install was successful by running the following command
+    /usr/bin/hcxpcapngtool -v
 
 ### Installing Pwn2Crack
 After installing the hcxtools package, adding Pwn2Crack is simple. Copy the "pwn2crack.py" file to your existing Pwnagotchi's plugins folder. Then copy the text of the "config.toml" file to your Pwnagotchi's "/etc/pwnagotchi/config.toml" file. You will need to alter the setting to match your setup. The configuration options are labeled if they are required or optional. I also added notes about how the options can affect your cracking process.

@@ -114,7 +114,7 @@ class Pwn2Crack(plugins.Plugin):
                 logging.debug('[Pwn2Crack] The hashes have already been uploaded to Hashtopolis. Skipping the handshake.')
                 return
             else:
-                logging.debug('[Pwn2Crack] The hashes have not been uploaded to Hashtopolis. Converting the handshake. - ' + self.hash_output_filename + '.uploaded')
+                logging.debug('[Pwn2Crack] The hashes have not been uploaded to Hashtopolis. Converting the handshake to 22000 format. - FILE: ' + self.hash_output_filename )
             # Confirm the pcap file is a valid handshake.
             # Run the hcxpcapngtool command, and save the output to a variable.
             hcxpcapngtool_test_output = os.popen('/usr/bin/hcxpcapngtool -o /dev/null ' + filename).read()

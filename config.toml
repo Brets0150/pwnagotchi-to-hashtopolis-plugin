@@ -1,6 +1,11 @@
 #########################################
 ### Hashtopolis Submit hash settings. ###
 #########################################
+
+# !!NOTE!!: You cannot have all these lines with "#" in the Pwnagotchi config file.
+#           So make sure you are only copying over the settings lines(main.plugins.pwn2crack.X)
+#           to your config.
+
 # Enabled the Pwn2Crack plugin
 main.plugins.pwn2crack.enabled = true
 

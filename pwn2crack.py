@@ -13,7 +13,7 @@ import pwnagotchi.ui.fonts as fonts
 # This is the main plugin class.
 class Pwn2Crack(plugins.Plugin):
     __author__ = 'me@CyberGladius.com'
-    __version__ = '1.0.1'
+    __version__ = '1.0.2'
     __license__ = 'GPL3'
     __description__ = 'This Pwnagotchi plugin will evaluate captured handshakes from pcap files, clean and convert complete handshakes to Hashcat-compatible 22000 hashes, and then create a new hashlist within Hashtopolis.'
     hcxtools_version_supported = '6.2.7' # Working as 11/2023, later version will not work on Pwnagotchi 1.5.5 because the OS is too old to support OpenSSL 3.0 EVP API.
@@ -83,17 +83,19 @@ class Pwn2Crack(plugins.Plugin):
         # Test if the binary 'hcxpcaptool' is on the required version.
         # If not, we cannot use this plugin. So we will disable it and report an error in the log.
         hcxtoolsVersion = os.popen('/usr/bin/hcxpcapngtool --version').read().split(' ')[1].split('\n')[0]
-        logging.info('[Pwn2Crack] The binary "hcxpcapngtool" is on version ' + hcxtoolsVersion + '. The required version is ' + self.hcxtools_version_supported + '.')
+        logging.debug('[Pwn2Crack] The binary "hcxpcapngtool" is on version ' + hcxtoolsVersion + '. The required version is ' + self.hcxtools_version_supported + '.')
         if hcxtoolsVersion != self.hcxtools_version_supported:
             logging.error('[Pwn2Crack] The binary "hcxpcapngtool" is not on the required version. Please install the "hcxtools" package.')
             return
         # All checks passed. Enable the plugin.
+        logging.debug('[Pwn2Crack] All Tests passed. Enabling the plugin.')
         self.running = True
 
     # On captured handshake, use hcxpcapngtool to confirm the pcap file is a valid handshake, and then convert it to a hashcat 22000 hash. Save the good hashes to a file with a matching name, but with a .22000 extension.
     def on_handshake(self, agent, filename, access_point, client_station):
         if not self.running:
             return
+
         logging.debug('[Pwn2Crack] A handshake was captured.')
 
         with self.lock:
@@ -153,10 +155,17 @@ class Pwn2Crack(plugins.Plugin):
                                 wordlist = sorted(set(wordlist))
                             with open(self.hash_output_filename_wordlist, 'w') as file:
                                 file.writelines(wordlist)
+
             # If the output does not contain the string 'written to 22000 hash file', then the pcap file is not a valid PKMID or 4Way handshake. Delete it.
             if 'written to 22000 hash file' not in hcxpcapngtool_test_output:
-                logging.info('[Pwn2Crack] The pcap file is not a valid handshake. Deleting it.')
+                logging.info('[Pwn2Crack] The pcap file is not a valid handshake. Deleting file:' + filename)
                 os.remove(filename)
+                # Confirm the pcap file was deleted.
+                if not os.path.exists(filename):
+                    logging.debug('[Pwn2Crack] The pcap file was deleted for being incomplete. FILE: ' + filename)
+                # If the pcap file was not deleted, then send an error to the log.
+                if os.path.exists(filename):
+                    logging.error('[Pwn2Crack] Could not delete the pcap file. Please delete it manually. FILE: ' + filename)
 
     # When the Internet is available, upload all the .22000 files in the pwnagotchi handshakes directory to Hashtopolis.
     def on_internet_available(self, agent):
